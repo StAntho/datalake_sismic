@@ -43,3 +43,7 @@ Lire le fichier sur un hdfs (sur le bash contener-hadoop)
 Création du fichier python explore_csv.py
 Execution du code dans le bash contener-spark
 Ajout de la suppression des doublons
+
+> Analyse pour trouver des corrélations
+> Analyse en découpant par mois -> non concluant car il n'y a que des données sur la même période
+> Analyse par rapport au lieu
