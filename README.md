@@ -45,5 +45,31 @@ Execution du code dans le bash contener-spark
 Ajout de la suppression des doublons
 
 > Analyse pour trouver des corrélations
+> Calcul de corrélation entre la tension des plaques et la magnitude
 > Analyse en découpant par mois -> non concluant car il n'y a que des données sur la même période
 > Analyse par rapport au lieu
+> Analyse par rapport à la tension des plaques
+
+Dans le df_ville, ajout de colonnes temporelles pour l'analyse de séquences temporelle
+
+Filtration sur les éléments précurseurs des petits et gros seismes
+
+Agregation des données sur 1 journée et par heure
+
+Ajout du producer kafka (changement de mode de lecture pandas -> spark)
+
+Branchement du spark_streaming au producer kafka (sur le bash spark-master)
+
+```bash
+  /spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1 app/spark_streaming.py
+```
+
+Lancement de superset(sur le bash superset)
+
+```bash
+  superset db upgrade && superset init && superset run -h 0.0.0.0
+```
+
+#### Problème rencontrer
+
+> erreur de port pour faire tourner superset

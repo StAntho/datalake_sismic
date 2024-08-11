@@ -19,6 +19,7 @@ df_ville.printSchema()
 df.show(15)
 df_ville.show(15)
 
+print("Stats for magnitude:")
 df.describe('magnitude').show()
 monthly_activity = df.groupBy("year", "month").agg(
     count("*").alias("event_count"),
@@ -43,8 +44,11 @@ tension = df.groupBy("tension entre plaque").agg(
 correlation_tension_mag = df.stat.corr("tension entre plaque", "magnitude")
 print("Correlation between tension and magnitude: {}".format(correlation_tension_mag))
 
+print("Stats by month:")
 monthly_activity.orderBy("year", "month").show(15)
+print("Stats by place:")
 place_stats.orderBy("ville").show(15)
+print("Stats by tension:")
 tension.orderBy("tension entre plaque").show(15)
 
 window_spec = Window.partitionBy("ville").orderBy("date")
@@ -53,16 +57,36 @@ df_ville = df_ville.withColumn("time_seconds", unix_timestamp(col("date")))
 df_ville = df_ville.withColumn("prev_time_seconds", unix_timestamp(col("prev_time")))
 df_ville = df_ville.withColumn("time_diff", col("time_seconds") - col("prev_time_seconds"))
 
+print("df_ville with new columns:")
 df_ville.show(15)
 
-small_quakes = df_ville.filter((col("mag") < 4.0) & (col("time_diff") < 3600 * 24 * 7))
+small_quakes = df_ville.filter((col("magnitude") < 4.0) & (col("time_diff") < 3600 * 24 * 7))
+print("Small quakes:")
 small_quakes.show(15)
 
 pre_event_window = Window.partitionBy("ville").orderBy("date").rangeBetween(0, 3600 * 24 * 7)
 
-df_ville = df_ville.withColumn("next_big_quake", expr("""
-    max(case when mag >= 5.0 then mag else null end) over (pre_event_window)
-"""))
+df_ville = df_ville.withColumn("big_quake_flag", when(col("magnitude") >= 5.0, col("magnitude")).otherwise(None))
 
-pre_big_quakes = df_ville.filter(col("next_big_quake").isNotNull())
-pre_big_quakes.select("region", "time", "mag", "next_big_quake").show(10)
+df_ville = df_ville.withColumn("next_big_quake", max(col("big_quake_flag")).over(window_spec))
+print("Big quakes:")
+df_ville.select("ville", "date", "magnitude", "next_big_quake").show(10, truncate=False)
+
+print("Stats for a day:")
+daily_df = df.groupBy(date_format(col("date"), "yyyy-MM-dd").alias("day")) \
+             .agg(count("*").alias("num_events"),
+                  avg("magnitude").alias("avg_magnitude"),
+                  min("magnitude").alias("min_magnitude"),
+                  max("magnitude").alias("max_magnitude"))
+
+daily_df.show(10, truncate=False)
+
+print("Stats for 1hour:")
+hourly_df = df.groupBy(date_format(col("date"), "yyyy-MM-dd HH:00:00").alias("hour")) \
+              .agg(count("*").alias("num_events"),
+                   avg("magnitude").alias("avg_magnitude"),
+                   min("magnitude").alias("min_magnitude"),
+                   max("magnitude").alias("max_magnitude"))
+
+hourly_df.show(10, truncate=False)
+

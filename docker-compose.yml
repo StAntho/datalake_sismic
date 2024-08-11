@@ -92,14 +92,38 @@ services:
     depends_on:
       - zookeeper
 
-
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
     ports:
       - "2181:2181"
 
+  superset:
+    image: apache/superset:latest
+    container_name: superset
+    environment:
+      SUPERSET_LOAD_EXAMPLES: "no"
+      SUPERSET_SECRET_KEY: "thisISaSECRET_1234"
+      SUPERSET_ADMIN_USERNAME: "admin"
+      SUPERSET_ADMIN_FIRST_NAME: "admin"
+      SUPERSET_ADMIN_LAST_NAME: "admin"
+      SUPERSET_ADMIN_EMAIL: "admin@superset.com"
+      SUPERSET_ADMIN_PASSWORD: "admin"
+    ports:
+      - "8088:8088"
+    depends_on:
+      - namenode
+    volumes:
+      - superset_home:/app/superset_home
+    command: >
+      /bin/bash -c "
+      superset db upgrade &&
+      superset init &&
+      superset run -h 0.0.0.0 -p 8088
+      "
+
 volumes:
   hadoop_namenode:
   hadoop_datanode:
   hadoop_historyserver:
+  superset_home:
